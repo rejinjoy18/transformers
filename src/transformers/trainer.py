@@ -1357,10 +1357,14 @@ class Trainer:
             logger.info(
                 f"Loading best model from {self.state.best_model_checkpoint} (score: {self.state.best_metric})."
             )
+            
+            
             # We load the model state dict on the CPU to avoid an OOM error.
-            state_dict = torch.load(os.path.join(self.state.best_model_checkpoint, WEIGHTS_NAME), map_location="cpu")
-            # If the model is on the GPU, it still works!
-            self._load_state_dict_in_model(state_dict)
+            if args.local_rank == 0:
+                print("Only loading from rank 0")
+                state_dict = torch.load(os.path.join(self.state.best_model_checkpoint, WEIGHTS_NAME), map_location="cpu")
+                # If the model is on the GPU, it still works!
+                self._load_state_dict_in_model(state_dict)
 
             if self.deepspeed:
                 self.deepspeed.load_checkpoint(
